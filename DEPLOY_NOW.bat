@@ -96,8 +96,6 @@ echo.
 echo Deploying to Railway...
 echo.
 
-cd backend
-
 railway login
 railway init
 railway up
@@ -111,8 +109,6 @@ railway variables set REDIS_URL="redis://default:5g1xxGcfpu7nZGnY3UEk0TNo4Axwewm
 echo.
 echo Opening Railway dashboard...
 railway open
-
-cd ..
 
 echo.
 echo ============================================================

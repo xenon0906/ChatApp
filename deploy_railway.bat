@@ -26,7 +26,6 @@ railway login
 
 echo.
 echo [2/5] Initializing project...
-cd backend
 railway init
 
 echo.
