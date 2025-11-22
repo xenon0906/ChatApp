@@ -1,0 +1,1 @@
+# Chatapp client package
