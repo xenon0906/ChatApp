@@ -65,14 +65,29 @@ manager = ConnectionManager()
 async def lifespan(app: FastAPI):
     """Startup and shutdown events for database/cache connections."""
     # Startup
-    await init_db()
-    await init_redis()
-    logger.info("Database and cache initialized")
+    try:
+        await init_db()
+        logger.info("Database initialized successfully")
+    except Exception as e:
+        logger.error(f"Database initialization failed: {e}")
+        logger.warning("App will start but database operations will fail")
+
+    try:
+        await init_redis()
+        logger.info("Cache initialized successfully")
+    except Exception as e:
+        logger.error(f"Cache initialization failed: {e}")
+        logger.warning("App will start but caching will be disabled")
+
     yield
+
     # Shutdown
-    await close_db()
-    await close_redis()
-    logger.info("Connections closed")
+    try:
+        await close_db()
+        await close_redis()
+        logger.info("Connections closed")
+    except Exception as e:
+        logger.error(f"Error closing connections: {e}")
 
 
 # FastAPI app initialization
@@ -117,8 +132,24 @@ async def get_current_user(token: str = Query(...)) -> str:
 
 @app.get("/")
 async def root():
-    """Health check endpoint."""
-    return {"status": "online", "service": "ephemeral-chat"}
+    """Health check endpoint with configuration status."""
+    import os
+    from db import db
+    from cache import redis_client
+
+    config_status = {
+        "status": "online",
+        "service": "ephemeral-chat",
+        "database": "connected" if db is not None else "disconnected",
+        "cache": "connected" if redis_client is not None else "disconnected",
+        "env_configured": {
+            "MONGO_URI": bool(os.getenv("MONGO_URI")),
+            "JWT_SECRET": bool(os.getenv("JWT_SECRET")),
+            "REDIS_URL": bool(os.getenv("REDIS_URL"))
+        }
+    }
+
+    return config_status
 
 
 @app.post("/signup", response_model=TokenResponse, status_code=201)
