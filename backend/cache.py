@@ -1,7 +1,7 @@
 """
 Redis caching layer for speed optimization on free tier.
-Caches recent messages and JWT validation results to reduce DB hits.
-This was a bit fiddly to get the async right, but it pays off in perf.
+Caches recent messages and JWT validation results to reduce database operations.
+Async operations optimized for performance within free tier constraints.
 """
 import os
 import json

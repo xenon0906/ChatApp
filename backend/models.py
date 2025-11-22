@@ -7,7 +7,7 @@ from datetime import datetime
 
 
 class UserSignup(BaseModel):
-    """Signup payload - just username and password."""
+    """User signup request containing username and password."""
     username: str = Field(..., min_length=3, max_length=30)
     password: str = Field(..., min_length=8, max_length=128)
 
@@ -20,13 +20,13 @@ class UserSignup(BaseModel):
 
 
 class UserLogin(BaseModel):
-    """Login payload - same as signup."""
+    """User login request containing username and password."""
     username: str
     password: str
 
 
 class MessageSend(BaseModel):
-    """Send a message - recipient and encrypted content."""
+    """Message send request containing recipient and encrypted content."""
     recipient: str
     encrypted_content: str  # Base64-encoded encrypted message
 
@@ -39,13 +39,13 @@ class MessageSend(BaseModel):
 
 
 class MessageResponse(BaseModel):
-    """What the client gets back when fetching messages."""
+    """Message response model returned when fetching messages."""
     sender: str
     recipient: str
     encrypted_content: str
     timestamp: datetime
 
-    model_config = ConfigDict(from_attributes=True)  # For ORM compatibility if needed
+    model_config = ConfigDict(from_attributes=True)
 
 
 class TokenResponse(BaseModel):

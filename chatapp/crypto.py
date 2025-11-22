@@ -106,7 +106,7 @@ class ChatCrypto:
 
 
 # Global key storage for active chats
-# In a real app, you'd want to persist this securely
+# Production implementation should persist keys securely (e.g., encrypted keystore)
 active_chat_keys: dict[str, ChatCrypto] = {}
 
 

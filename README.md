@@ -65,32 +65,32 @@ chatapp/
 
 ## Installation
 
-### Backend Deployment (Render.com)
+### Backend Deployment (Railway.app)
 
 1. **Setup MongoDB Atlas** (free tier):
    - Create account at mongodb.com/cloud/atlas
-   - Create a free M0 cluster
-   - Add database user and IP whitelist (0.0.0.0/0 for Render)
-   - Get connection string
+   - Create free M0 cluster
+   - Add database user and IP whitelist (0.0.0.0/0)
+   - Copy connection string
 
 2. **Setup Redis** (free tier):
-   - Use Redis Labs (redis.com) free tier, OR
-   - Add Render Redis add-on to your service
+   - Create account at redis.com
+   - Create free database instance
+   - Copy connection string
 
-3. **Deploy to Render**:
+3. **Deploy to Railway**:
    - Push code to GitHub
-   - Create new Web Service on Render
-   - Connect your GitHub repository
-   - Configure:
-     - **Build Command**: `cd backend && pip install -r requirements.txt`
-     - **Start Command**: `cd backend && uvicorn app:app --host 0.0.0.0 --port $PORT`
+   - Visit railway.app/dashboard and create new project
+   - Select "Deploy from GitHub repo"
+   - In service settings, set **Root Directory** to `backend`
    - Add environment variables:
      ```
      MONGO_URI=mongodb+srv://...
      JWT_SECRET=<generate with: python -c "import secrets; print(secrets.token_urlsafe(32))">
      REDIS_URL=redis://...
      ```
-   - Deploy!
+   - Deploy from Deployments tab
+   - Copy service URL from Settings → Domains
 
 ### Client Installation
 
@@ -99,8 +99,8 @@ chatapp/
 cd chatapp
 pip install -r requirements.txt
 
-# Set backend URL
-export BACKEND_URL=https://your-app.onrender.com
+# Set backend URL (use your Railway service URL)
+export BACKEND_URL=https://your-app.railway.app
 
 # Run directly
 python main.py
