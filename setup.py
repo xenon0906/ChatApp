@@ -14,10 +14,10 @@ else:
     long_description = "Secure ephemeral messaging with end-to-end encryption"
 
 setup(
-    name="chatapp-cli",
+    name="chattingworld",
     version="1.0.0",
     author="ChatApp Team",
-    author_email="contact@chatapp.example.com",
+    author_email="contact@chattingworld.com",
     description="Secure ephemeral messaging with end-to-end encryption",
     long_description=long_description,
     long_description_content_type="text/markdown",
@@ -41,7 +41,8 @@ setup(
     ],
     entry_points={
         "console_scripts": [
-            "chatapp=chatapp_package.main:main",
+            "chattingworld=chatapp_package.main:main",
+            "chatapp=chatapp_package.main:main",  # Keep old name for compatibility
         ],
     },
 )
