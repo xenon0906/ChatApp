@@ -1,0 +1,20 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(python:*)",
+      "Bash(pip install:*)",
+      "Bash(uvicorn:*)",
+      "Bash(timeout /t 5 /nobreak)",
+      "Bash(nul)",
+      "Bash(rd /s /q __pycache__ 2)",
+      "Bash(rd /s /q backend__pycache__ 2)",
+      "Bash(rd /s /q chatapp__pycache__ 2)",
+      "Bash(rd /s /q tests__pycache__ 2)",
+      "Bash(del /s /q *.pyc 2)",
+      "Bash(curl:*)",
+      "Bash(dir:*)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}

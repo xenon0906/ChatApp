@@ -3,6 +3,8 @@ MongoDB connection and database operations.
 Using motor (async PyMongo) for better performance with FastAPI.
 """
 import os
+import sys
+import ssl
 from typing import Optional, List
 from datetime import datetime, timedelta, timezone
 from motor.motor_asyncio import AsyncIOMotorClient, AsyncIOMotorDatabase
@@ -25,24 +27,51 @@ async def init_db():
     """
     global client, db
 
-    # Handle SSL issues on Windows for local development
-    # In production (Railway/Render), SSL works fine on Linux
+    # Create SSL context for Windows compatibility
+    ssl_context = None
     try:
-        client = AsyncIOMotorClient(
-            MONGO_URI,
-            serverSelectionTimeoutMS=10000,
-            tlsAllowInvalidCertificates=False
-        )
+        import certifi
+        ssl_context = ssl.create_default_context(cafile=certifi.where())
+    except ImportError:
+        # If certifi not available, use default
+        ssl_context = ssl.create_default_context()
+
+    # Disable certificate verification on Windows (development only)
+    # On production (Linux), this works fine
+    is_windows = sys.platform.startswith('win')
+
+    try:
+        if is_windows:
+            # Windows: Use relaxed SSL settings for development
+            client = AsyncIOMotorClient(
+                MONGO_URI,
+                serverSelectionTimeoutMS=10000,
+                tls=True,
+                tlsAllowInvalidCertificates=True,
+                tlsAllowInvalidHostnames=True
+            )
+        else:
+            # Linux/Mac: Use proper SSL
+            client = AsyncIOMotorClient(
+                MONGO_URI,
+                serverSelectionTimeoutMS=10000,
+                tlsCAFile=certifi.where() if 'certifi' in sys.modules else None
+            )
+
         # Test connection
         await client.admin.command('ping')
+
     except Exception as e:
-        # Fallback for Windows SSL issues
-        print(f"MongoDB connection with SSL failed: {e}")
-        print("Retrying with relaxed SSL settings (dev only)...")
+        # Final fallback - very relaxed settings
+        print(f"MongoDB connection failed: {e}")
+        print("Using fallback connection settings...")
         client = AsyncIOMotorClient(
             MONGO_URI,
-            serverSelectionTimeoutMS=10000,
-            tlsAllowInvalidCertificates=True  # Only for local dev
+            serverSelectionTimeoutMS=15000,
+            tls=True,
+            tlsAllowInvalidCertificates=True,
+            tlsAllowInvalidHostnames=True,
+            directConnection=False
         )
 
     db = client[DB_NAME]
