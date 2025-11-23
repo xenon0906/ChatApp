@@ -1,0 +1,14 @@
+services:
+  - type: web
+    name: chatapp-backend
+    runtime: python
+    region: frankfurt  # EU region - change to oregon if you prefer US
+    plan: free
+    buildCommand: pip install --upgrade pip && pip install -r backend/requirements.txt
+    startCommand: cd backend && uvicorn app:app --host 0.0.0.0 --port $PORT --workers 1 --loop uvloop --http httptools
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.12.0
+      - key: PIP_CACHE_DIR
+        value: /opt/render/.pip-cache
+    healthCheckPath: /

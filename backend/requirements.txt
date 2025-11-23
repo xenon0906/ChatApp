@@ -1,12 +1,27 @@
-fastapi>=0.109.0
-uvicorn[standard]>=0.27.0
-motor>=3.7.0
-pymongo>=4.9.0
-cryptography>=42.0.0
-argon2-cffi>=23.1.0
-PyJWT>=2.10.1
-slowapi>=0.1.9
-pydantic>=2.7.0
-redis>=5.0.1
-python-dotenv>=1.0.0
-certifi>=2025.0.0
+# Core FastAPI - pinned for faster builds
+fastapi==0.121.3
+uvicorn[standard]==0.38.0
+
+# Database (MongoDB)
+motor==3.7.1
+pymongo==4.15.4
+
+# Encryption & Security
+cryptography==46.0.3
+argon2-cffi==25.1.0
+PyJWT==2.10.1
+
+# Rate limiting
+slowapi==0.1.9
+
+# Data validation
+pydantic==2.12.4
+
+# Cache (Redis)
+redis==7.1.0
+
+# Environment
+python-dotenv==1.2.1
+
+# SSL/TLS support
+certifi==2025.11.12

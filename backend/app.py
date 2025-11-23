@@ -64,30 +64,45 @@ manager = ConnectionManager()
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """Startup and shutdown events for database/cache connections."""
-    # Startup
-    try:
-        await init_db()
-        logger.info("Database initialized successfully")
-    except Exception as e:
-        logger.error(f"Database initialization failed: {e}")
-        logger.warning("App will start but database operations will fail")
+    # Startup - Initialize DB and Redis in parallel for faster startup
+    import asyncio
 
-    try:
-        await init_redis()
-        logger.info("Cache initialized successfully")
-    except Exception as e:
-        logger.error(f"Cache initialization failed: {e}")
-        logger.warning("App will start but caching will be disabled")
+    async def init_db_safe():
+        try:
+            await init_db()
+            logger.info("Database initialized successfully")
+        except Exception as e:
+            logger.error(f"Database initialization failed: {e}")
+            logger.warning("App will start but database operations will fail")
+
+    async def init_redis_safe():
+        try:
+            await init_redis()
+            logger.info("Cache initialized successfully")
+        except Exception as e:
+            logger.error(f"Cache initialization failed: {e}")
+            logger.warning("App will start but caching will be disabled")
+
+    # Run both initializations concurrently
+    await asyncio.gather(init_db_safe(), init_redis_safe())
 
     yield
 
-    # Shutdown
-    try:
-        await close_db()
-        await close_redis()
-        logger.info("Connections closed")
-    except Exception as e:
-        logger.error(f"Error closing connections: {e}")
+    # Shutdown - Close connections in parallel
+    async def close_db_safe():
+        try:
+            await close_db()
+        except Exception as e:
+            logger.error(f"Error closing database: {e}")
+
+    async def close_redis_safe():
+        try:
+            await close_redis()
+        except Exception as e:
+            logger.error(f"Error closing cache: {e}")
+
+    await asyncio.gather(close_db_safe(), close_redis_safe())
+    logger.info("Connections closed")
 
 
 # FastAPI app initialization
