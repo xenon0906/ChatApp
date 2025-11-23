@@ -12,7 +12,9 @@
       "Bash(rd /s /q tests__pycache__ 2)",
       "Bash(del /s /q *.pyc 2)",
       "Bash(curl:*)",
-      "Bash(dir:*)"
+      "Bash(dir:*)",
+      "Bash(chmod:*)",
+      "Bash(git add:*)"
     ],
     "deny": [],
     "ask": []

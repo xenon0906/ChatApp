@@ -41,38 +41,41 @@ async def init_db():
     is_windows = sys.platform.startswith('win')
 
     try:
-        if is_windows:
-            # Windows: Use relaxed SSL settings for development
-            client = AsyncIOMotorClient(
-                MONGO_URI,
-                serverSelectionTimeoutMS=10000,
-                tls=True,
-                tlsAllowInvalidCertificates=True,
-                tlsAllowInvalidHostnames=True
-            )
-        else:
-            # Linux/Mac: Use proper SSL
-            client = AsyncIOMotorClient(
-                MONGO_URI,
-                serverSelectionTimeoutMS=10000,
-                tlsCAFile=certifi.where() if 'certifi' in sys.modules else None
-            )
-
-        # Test connection
-        await client.admin.command('ping')
-
-    except Exception as e:
-        # Final fallback - very relaxed settings
-        print(f"MongoDB connection failed: {e}")
-        print("Using fallback connection settings...")
+        # Try standard connection with SSL/TLS properly configured
+        # This works for both Windows and Linux/Render
         client = AsyncIOMotorClient(
             MONGO_URI,
             serverSelectionTimeoutMS=15000,
             tls=True,
-            tlsAllowInvalidCertificates=True,
+            tlsAllowInvalidCertificates=True,  # Required for MongoDB Atlas free tier
             tlsAllowInvalidHostnames=True,
-            directConnection=False
+            retryWrites=True,
+            w='majority'
         )
+
+        # Test connection
+        await client.admin.command('ping')
+        print("MongoDB connected successfully!")
+
+    except Exception as e:
+        # Fallback - even more relaxed settings
+        print(f"MongoDB connection failed: {e}")
+        print("Using fallback connection settings...")
+        try:
+            client = AsyncIOMotorClient(
+                MONGO_URI,
+                serverSelectionTimeoutMS=20000,
+                tls=True,
+                tlsAllowInvalidCertificates=True,
+                tlsAllowInvalidHostnames=True,
+                directConnection=False,
+                retryWrites=True
+            )
+            await client.admin.command('ping')
+            print("MongoDB connected with fallback settings!")
+        except Exception as fallback_error:
+            print(f"Fallback connection also failed: {fallback_error}")
+            raise
 
     db = client[DB_NAME]
 
