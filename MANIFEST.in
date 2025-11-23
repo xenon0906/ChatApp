@@ -1,0 +1,5 @@
+include README.md
+include LICENSE
+include INSTALLATION.md
+include TERMINAL_USAGE.md
+recursive-include chatapp_package *.py
