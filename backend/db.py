@@ -27,55 +27,59 @@ async def init_db():
     """
     global client, db
 
-    # Create SSL context for Windows compatibility
-    ssl_context = None
-    try:
-        import certifi
-        ssl_context = ssl.create_default_context(cafile=certifi.where())
-    except ImportError:
-        # If certifi not available, use default
-        ssl_context = ssl.create_default_context()
+    # Check if we need to modify the URI for SSL compatibility
+    # MongoDB Atlas requires specific SSL/TLS settings
+    uri = MONGO_URI
 
-    # Disable certificate verification on Windows (development only)
-    # On production (Linux), this works fine
-    is_windows = sys.platform.startswith('win')
+    # If the URI doesn't already have SSL params, add them
+    if 'tls=' not in uri.lower() and 'ssl=' not in uri.lower():
+        # Add SSL parameters to the URI itself for better compatibility
+        separator = '&' if '?' in uri else '?'
+        uri = f"{uri}{separator}tls=true&tlsAllowInvalidCertificates=true"
 
     try:
-        # Try standard connection with SSL/TLS properly configured
-        # This works for both Windows and Linux/Render
+        # Simplified connection - let MongoDB handle SSL via URI parameters
+        # This approach works better across different environments
         client = AsyncIOMotorClient(
-            MONGO_URI,
-            serverSelectionTimeoutMS=15000,
-            tls=True,
-            tlsAllowInvalidCertificates=True,  # Required for MongoDB Atlas free tier
-            tlsAllowInvalidHostnames=True,
-            retryWrites=True,
-            w='majority'
+            uri,
+            serverSelectionTimeoutMS=30000,  # Increased timeout for cloud connections
+            connectTimeoutMS=30000,
+            socketTimeoutMS=30000
         )
 
         # Test connection
         await client.admin.command('ping')
-        print("MongoDB connected successfully!")
+        print("✅ MongoDB connected successfully!")
 
     except Exception as e:
-        # Fallback - even more relaxed settings
-        print(f"MongoDB connection failed: {e}")
-        print("Using fallback connection settings...")
+        print(f"❌ MongoDB connection failed: {e}")
+        print("⚠️  Attempting alternative connection method...")
+
         try:
+            # Alternative: Try with explicit SSL context
+            import certifi
+
+            ssl_context = ssl.create_default_context(cafile=certifi.where())
+            ssl_context.check_hostname = False
+            ssl_context.verify_mode = ssl.CERT_NONE
+
             client = AsyncIOMotorClient(
                 MONGO_URI,
-                serverSelectionTimeoutMS=20000,
-                tls=True,
-                tlsAllowInvalidCertificates=True,
-                tlsAllowInvalidHostnames=True,
-                directConnection=False,
-                retryWrites=True
+                serverSelectionTimeoutMS=30000,
+                tlsCAFile=certifi.where(),
+                ssl_cert_reqs=ssl.CERT_NONE,
+                connectTimeoutMS=30000
             )
+
             await client.admin.command('ping')
-            print("MongoDB connected with fallback settings!")
+            print("✅ MongoDB connected with alternative method!")
+
         except Exception as fallback_error:
-            print(f"Fallback connection also failed: {fallback_error}")
-            raise
+            print(f"❌ Alternative connection also failed: {fallback_error}")
+            print("⚠️  The app will start but database operations will fail.")
+            print("💡 Check: 1) MongoDB URI is correct, 2) Network access allows 0.0.0.0/0")
+            # Don't raise - let app start without DB
+            return
 
     db = client[DB_NAME]
 
