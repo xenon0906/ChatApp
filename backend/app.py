@@ -2,7 +2,7 @@
 FastAPI backend for ephemeral chat app.
 Handles auth, message storage, and WebSocket real-time communication.
 """
-from fastapi import FastAPI, HTTPException, WebSocket, WebSocketDisconnect, Query, Depends
+from fastapi import FastAPI, HTTPException, WebSocket, WebSocketDisconnect, Query, Depends, Request
 from fastapi.middleware.cors import CORSMiddleware
 from slowapi import Limiter, _rate_limit_exceeded_handler
 from slowapi.util import get_remote_address
@@ -154,7 +154,7 @@ async def root():
 
 @app.post("/signup", response_model=TokenResponse, status_code=201)
 @limiter.limit("5/minute")  # Strict limit for signup to prevent abuse
-async def signup(request, user: UserSignup):
+async def signup(request: Request, user: UserSignup):
     """
     Create a new user account.
     Returns JWT token immediately so user can start chatting.
@@ -176,7 +176,7 @@ async def signup(request, user: UserSignup):
 
 @app.post("/login", response_model=TokenResponse)
 @limiter.limit("10/minute")  # Standard rate limit
-async def login(request, user: UserLogin):
+async def login(request: Request, user: UserLogin):
     """Authenticate user and return JWT token."""
     # Get user from database
     db_user = await get_user(user.username.lower())
@@ -195,7 +195,7 @@ async def login(request, user: UserLogin):
 
 @app.post("/messages", status_code=201)
 @limiter.limit("30/minute")  # Higher limit for actual messaging
-async def send_message(request, message: MessageSend, username: str = Depends(get_current_user)):
+async def send_message(request: Request, message: MessageSend, username: str = Depends(get_current_user)):
     """
     Send an encrypted message to another user.
     Invalidates cache and notifies recipient via WebSocket if online.
@@ -220,7 +220,7 @@ async def send_message(request, message: MessageSend, username: str = Depends(ge
 
 @app.get("/messages/{other_user}", response_model=list[MessageResponse])
 @limiter.limit("20/minute")
-async def get_messages(request, other_user: str, username: str = Depends(get_current_user)):
+async def get_messages(request: Request, other_user: str, username: str = Depends(get_current_user)):
     """
     Fetch messages between current user and another user.
     Uses cache for speed, falls back to database.
@@ -249,7 +249,7 @@ async def get_messages(request, other_user: str, username: str = Depends(get_cur
 
 @app.get("/contacts", response_model=list[str])
 @limiter.limit("20/minute")
-async def get_user_contacts(request, username: str = Depends(get_current_user)):
+async def get_user_contacts(request: Request, username: str = Depends(get_current_user)):
     """Get list of users the current user has chatted with."""
     contacts = await get_contacts(username)
     return contacts
